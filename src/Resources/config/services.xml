@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+
+<container xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns="http://symfony.com/schema/dic/services"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <parameters>
+        <parameter key="viosys_migration_namespace_default">VioDbMigration</parameter>
+        <parameter key="viosys_migration_directory_default">vio_sql/migrations</parameter>
+        <parameter key="viosys.migration.namespace">
+            %env(default:viosys_migration_namespace_default:VIOSYS_MIGRATION_NAMESPACE)%
+        </parameter>
+        <parameter key="viosys.migration.directory">
+            %kernel.project_dir%/%env(default:viosys_migration_directory_default:VIOSYS_MIGRATION_DIRECTORY)%
+        </parameter>
+    </parameters>
+    <services>
+
+
+        <service class="Viosys\VioDBMigration\Subscriber\KernelSubscriber"
+                 id="viosys.vio_dbmigration.subscriber.kernel_subscriber">
+            <tag name="kernel.event_subscriber"/>
+            <!--suppress XmlServiceInstanceInspection -->
+            <argument type="service" id="kernel"/>
+            <argument>%viosys.migration.namespace%</argument>
+            <argument>%viosys.migration.directory%</argument>
+        </service>
+        <!--
+        <service id="Viosys\VioDBMigration\Services\MigrationCollection"
+            decorates="Shopware\Core\Framework\Migration\MigrationCollection"
+            decoration-priority="1000">
+            <argument type="service" id="service_container"/>
+        </service>
+        -->
+    </services>
+</container>
