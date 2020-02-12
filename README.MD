@@ -9,7 +9,7 @@ to .env-file
 
 install plugin:
 
-`` bin/console plugin:insall --activate VioDBMigration``
+`` bin/console plugin:install --activate VioDBMigration``
 
 create an migration under the configured directory:
 
