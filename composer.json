@@ -1,6 +1,6 @@
 {
     "name": "viosys/vio-db-migration-sw6",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "description": "Shopware plugin to apply project-specific DB-Updates",
     "keywords": [
         "shopware",
@@ -8,7 +8,8 @@
     ],
     "type": "shopware-platform-plugin",
     "require": {
-        "shopware/core": "6.*"
+        "shopware/core": "6.*",
+        "civicrm/composer-compile-plugin": "~0.15"
     },
     "extra": {
         "shopware-plugin-class": "Viosys\\VioDBMigration\\VioDBMigration",
@@ -19,21 +20,20 @@
         "description": {
             "de-DE": "Shopware-Plugin zum Anwenden projektspezifischer DB-Updates",
             "en-GB": "Shopware plugin to apply project-specific DB-Updates"
-        }
+        },
+        "compile": [
+            { 
+                "run": [
+                    "@sh [ ! -f install.lock ] || bin/console plugin:refresh",
+                    "@sh [ ! -f install.lock ] || plugin:install --activate VioDBMigration"
+                ],
+                "title": "install VioDBMigration" 
+            }
+        ]
     },
     "autoload": {
         "psr-4": {
             "Viosys\\VioDBMigration\\": "src/"
         }
-    },
-    "scripts": {        
-        "post-install-cmd": [
-          "[ ! -f install.lock ] || bin/console plugin:refresh",
-          "[ ! -f install.lock ] || plugin:install --activate VioDBMigration"
-        ],
-        "post-update-cmd": [
-          "[ ! -f install.lock ] || bin/console plugin:refresh",
-          "[ ! -f install.lock ] || plugin:install --activate VioDBMigration"
-        ]
     }
 }
