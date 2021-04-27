@@ -25,5 +25,15 @@
         "psr-4": {
             "Viosys\\VioDBMigration\\": "src/"
         }
-    }
+    },
+    "scripts": {        
+        "post-install-cmd": [
+          "[ ! -f install.lock ] || bin/console plugin:refresh",
+          "[ ! -f install.lock ] || plugin:install --activate VioDBMigration"
+        ],
+        "post-update-cmd": [
+          "[ ! -f install.lock ] || bin/console plugin:refresh",
+          "[ ! -f install.lock ] || plugin:install --activate VioDBMigration"
+        ]
+    },
 }
