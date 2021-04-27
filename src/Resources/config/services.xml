@@ -17,6 +17,15 @@
     <services>
 
 
+        <service id="Shopware\Core\Framework\Migration\MigrationSource.VioDbMigration"
+                 class="Shopware\Core\Framework\Migration\MigrationSource">
+            <argument type="string">%viosys.migration.namespace%</argument>
+            <argument type="collection">
+                <argument key="%viosys.migration.directory%">%viosys.migration.namespace%</argument>
+            </argument>
+            <tag name="shopware.migration_source"/>
+        </service>
+
         <service class="Viosys\VioDBMigration\Subscriber\KernelSubscriber"
                  id="viosys.vio_dbmigration.subscriber.kernel_subscriber">
             <tag name="kernel.event_subscriber"/>
