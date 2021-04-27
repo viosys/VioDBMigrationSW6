@@ -1,6 +1,6 @@
 {
     "name": "viosys/vio-db-migration-sw6",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "description": "Shopware plugin to apply project-specific DB-Updates",
     "keywords": [
         "shopware",
