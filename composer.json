@@ -27,7 +27,7 @@
                 "title": "install VioDBMigration" 
             },
             { 
-                "run": "@sh cd ./../../../ && source .env && bin/console database:migrate --all ${VIOSYS_MIGRATION_NAMESPACE}",
+                "run": "@sh cd ./../../../ && source \"$(pwd)/.env\" && bin/console database:migrate --all ${VIOSYS_MIGRATION_NAMESPACE}",
                 "title": "run Migrations" 
             }
         ]
