@@ -7,12 +7,8 @@
     <parameters>
         <parameter key="viosys_migration_namespace_default">VioDbMigration</parameter>
         <parameter key="viosys_migration_directory_default">vio_sql/migrations</parameter>
-        <parameter key="viosys.migration.namespace">
-            %env(default:viosys_migration_namespace_default:VIOSYS_MIGRATION_NAMESPACE)%
-        </parameter>
-        <parameter key="viosys.migration.directory">
-            %kernel.project_dir%/%env(default:viosys_migration_directory_default:VIOSYS_MIGRATION_DIRECTORY)%
-        </parameter>
+        <parameter key="viosys.migration.namespace">%env(default:viosys_migration_namespace_default:VIOSYS_MIGRATION_NAMESPACE)%</parameter>
+        <parameter key="viosys.migration.directory">%kernel.project_dir%/%env(default:viosys_migration_directory_default:VIOSYS_MIGRATION_DIRECTORY)%</parameter>
     </parameters>
     <services>
 
