@@ -23,7 +23,7 @@
         },
         "compile": [
             { 
-                "run": "@sh cd ./../../../ && bin/console plugin:refresh && bin/console plugin:install --activate VioDBMigration  && bin/console plugin:update VioDBMigration",
+                "run": "@sh cd ./../../../ && bin/console plugin:refresh && bin/console plugin:install --activate VioDBMigration  && bin/console plugin:update VioDBMigration && bin/console cache:clear",
                 "title": "install VioDBMigration" 
             },
             { 
