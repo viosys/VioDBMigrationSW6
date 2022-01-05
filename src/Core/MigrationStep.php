@@ -12,7 +12,7 @@ use \Shopware\Core\Framework\Migration\MigrationStep as CoreMigrationStep;
 
 abstract class MigrationStep extends CoreMigrationStep
 {
-    protected function setConfiguration(string $key, $configuration): void
+    protected function setConfiguration(string $key, $configuration, Connection $connection): void
     {
         $connection->delete('system_config', [
             'configuration_key' => $key
