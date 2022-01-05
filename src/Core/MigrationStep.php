@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Viosys\VioDBMigration\Core;
 
+use Doctrine\DBAL\Connection;
 use Shopware\Core\Kernel;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
