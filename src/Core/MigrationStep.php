@@ -9,7 +9,8 @@ use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
-use \Shopware\Core\Framework\Migration\MigrationStep as CoreMigrationStep;
+use Shopware\Core\Framework\Migration\MigrationStep as CoreMigrationStep;
+use Shopware\Core\Framework\Uuid\Uuid;
 
 abstract class MigrationStep extends CoreMigrationStep
 {
