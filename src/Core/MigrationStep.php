@@ -3,8 +3,11 @@ declare(strict_types=1);
 
 namespace Viosys\VioDBMigration\Core;
 
+use DateTime;
 use Doctrine\DBAL\Connection;
-use Shopware\Core\Kernel;
+use Doctrine\DBAL\Exception as DBALException;
+use JsonException;
+use Shopware\Core\Defaults;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -14,6 +17,10 @@ use Shopware\Core\Framework\Uuid\Uuid;
 
 abstract class MigrationStep extends CoreMigrationStep
 {
+    /**
+     * @throws DBALException
+     * @throws JsonException
+     */
     protected function setConfiguration(string $key, $configuration, Connection $connection): void
     {
         $connection->delete('system_config', [
@@ -22,7 +29,7 @@ abstract class MigrationStep extends CoreMigrationStep
         $connection->insert('system_config', [
             'id' => Uuid::randomBytes(),
             'configuration_key' => $key,
-            'configuration_value' => json_encode($configuration),
+            'configuration_value' => json_encode($configuration, JSON_THROW_ON_ERROR),
             'created_at' => (new DateTime())->format(Defaults::STORAGE_DATE_FORMAT),
             'updated_at' => (new DateTime())->format(Defaults::STORAGE_DATE_FORMAT)
         ]);
