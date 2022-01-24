@@ -86,6 +86,37 @@ abstract class MigrationStep extends CoreMigrationStep
         $application->run($input);
     }
 
+    /**
+     * @throws Exception
+     */
+    protected function pluginRefresh(KernelInterface $kernel): void
+    {
+        $application = new Application($kernel);
+        $application->setAutoExit(false);
+
+        $input = new ArrayInput([
+            0 => 'plugin:refresh',
+            '--no-interaction'
+        ]);
+        $application->run($input);
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function updatePlugins(KernelInterface $kernel, array $pluginList): void
+    {
+        $application = new Application($kernel);
+        $application->setAutoExit(false);
+
+        $input = new ArrayInput([
+            0 => 'plugin:update',
+            '--no-interaction',
+            'plugins' => $pluginList
+        ]);
+        $application->run($input);
+    }
+
     protected function getContainer(): ContainerInterface
     {
         return $this->getKernel()->getContainer();
