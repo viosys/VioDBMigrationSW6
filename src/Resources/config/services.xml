@@ -30,12 +30,12 @@
             <argument>%viosys.migration.namespace%</argument>
             <argument>%viosys.migration.directory%</argument>
         </service>
-        <!--
-        <service id="Viosys\VioDBMigration\Services\MigrationCollection"
-            decorates="Shopware\Core\Framework\Migration\MigrationCollection"
-            decoration-priority="1000">
-            <argument type="service" id="service_container"/>
+
+        <service id="Viosys\VioDBMigration\Subscriber\SystemSubscriber">
+            <argument id="kernel" type="service"/>
+            <argument>%viosys.migration.namespace%</argument>
+            <tag name="kernel.event_subscriber"/>
         </service>
-        -->
+
     </services>
 </container>
