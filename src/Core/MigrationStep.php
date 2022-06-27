@@ -126,10 +126,10 @@ abstract class MigrationStep extends CoreMigrationStep
         $input =  new ArrayInput([
             0 => 'plugin:install',
             '--activate' => $activate,
-            '--no-interaction',
             '--refresh',
             'plugins' => $pluginList
         ]);
+        $input->setInteractive(false);
         $application->run($input);
     }
 
@@ -142,9 +142,9 @@ abstract class MigrationStep extends CoreMigrationStep
         $application->setAutoExit(false);
 
         $input = new ArrayInput([
-            0 => 'plugin:refresh',
-            '--no-interaction'
+            0 => 'plugin:refresh'
         ]);
+        $input->setInteractive(false);
         $application->run($input);
     }
 
@@ -158,10 +158,10 @@ abstract class MigrationStep extends CoreMigrationStep
 
         $input = new ArrayInput([
             0 => 'plugin:update',
-            '--no-interaction',
             '--refresh',
             'plugins' => $pluginList
         ]);
+        $input->setInteractive(false);
         $application->run($input);
     }
 
