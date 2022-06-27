@@ -127,6 +127,7 @@ abstract class MigrationStep extends CoreMigrationStep
             0 => 'plugin:install',
             '--activate' => $activate,
             '--no-interaction',
+            '--refresh',
             'plugins' => $pluginList
         ]);
         $application->run($input);
@@ -135,9 +136,9 @@ abstract class MigrationStep extends CoreMigrationStep
     /**
      * @throws Exception
      */
-    protected function pluginRefresh(KernelInterface $kernel): void
+    protected function pluginRefresh(#[Deprecated] KernelInterface $kernel = null): void
     {
-        $application = new Application($kernel);
+        $application = new Application($this->getKernel());
         $application->setAutoExit(false);
 
         $input = new ArrayInput([
@@ -150,14 +151,15 @@ abstract class MigrationStep extends CoreMigrationStep
     /**
      * @throws Exception
      */
-    protected function updatePlugins(KernelInterface $kernel, array $pluginList): void
+    protected function updatePlugins(array $pluginList): void
     {
-        $application = new Application($kernel);
+        $application = new Application($this->getKernel());
         $application->setAutoExit(false);
 
         $input = new ArrayInput([
             0 => 'plugin:update',
             '--no-interaction',
+            '--refresh',
             'plugins' => $pluginList
         ]);
         $application->run($input);
