@@ -7,8 +7,19 @@ use DateTime;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\Exception as DBALDriverException;
 use Doctrine\DBAL\Exception as DBALException;
+use Exception;
 use JsonException;
 use Shopware\Core\Defaults;
+use Shopware\Core\Framework\Context;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\AndFilter;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Shopware\Core\System\Language\LanguageDefinition;
+use Shopware\Core\System\Language\LanguageEntity;
+use Shopware\Core\System\StateMachine\Aggregation\StateMachineState\StateMachineStateDefinition;
+use Shopware\Core\System\StateMachine\Aggregation\StateMachineTransition\StateMachineTransitionDefinition;
+use Shopware\Core\System\StateMachine\StateMachineDefinition;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -18,6 +29,36 @@ use Shopware\Core\Framework\Uuid\Uuid;
 
 abstract class MigrationStep extends CoreMigrationStep
 {
+    #region core functions
+
+    protected ?string $deId = null;
+    protected ?string $enId = null;
+
+    protected ?ContainerInterface $container = null;
+
+    protected function getContainer(): ContainerInterface
+    {
+        if($this->container === null) {
+            $this->container = $this->getKernel()->getContainer();
+        }
+        return $this->container;
+    }
+
+    private function getKernel(): KernelInterface
+    {
+        global $kernel;
+        return $kernel->getKernel();
+    }
+
+    protected function getContext(): Context
+    {
+        /** @noinspection PhpInternalEntityUsedInspection */
+        return Context::createDefaultContext();
+    }
+
+    #endregion
+
+    #region snippet functions
     /**
      * @throws DBALDriverException
      * @throws DBALException
@@ -52,6 +93,9 @@ abstract class MigrationStep extends CoreMigrationStep
         ]);
     }
 
+    #endregion
+
+    #region configuration functions
     /**
      * @throws DBALException
      * @throws JsonException
@@ -69,6 +113,10 @@ abstract class MigrationStep extends CoreMigrationStep
             'updated_at' => (new DateTime())->format(Defaults::STORAGE_DATE_FORMAT)
         ]);
     }
+
+    #endregion
+
+    #region plugin-lifecycle functions
 
     protected function InstallPlugins(array $pluginList, bool $activate = true): void
     {
@@ -88,7 +136,7 @@ abstract class MigrationStep extends CoreMigrationStep
     /**
      * @throws Exception
      */
-    protected function pluginRefresh(): void
+    protected function pluginRefresh(#[Deprecated] KernelInterface $kernel = null): void
     {
         $application = new Application($this->getKernel());
         $application->setAutoExit(false);
@@ -117,14 +165,172 @@ abstract class MigrationStep extends CoreMigrationStep
         $application->run($input);
     }
 
-    protected function getContainer(): ContainerInterface
+    #endregion
+
+    #region language functions
+
+    protected function getLanguageIdByCode(Context $context, string $languageCode): string
     {
-        return $this->getKernel()->getContainer();
+        /** @var EntityRepositoryInterface $repository */
+        $repository = $this->getContainer()->get(LanguageDefinition::ENTITY_NAME . '.repository');
+
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter(LanguageDefinition::ENTITY_NAME . '.translationCode.code', $languageCode));
+
+        return $repository->searchIds($criteria, $context)->firstId() ?? '';
     }
 
-    private function getKernel(): KernelInterface
+    protected function getDeDeLanguageId(Context $context): string
     {
-        global $kernel;
-        return $kernel->getKernel();
+        if ($this->deId === null) {
+            $this->deId = $this->getLanguageIdByCode($context, 'de-DE');
+        }
+        return $this->deId;
     }
+
+    protected function getEnGbLanguageId(Context $context): string
+    {
+        if ( $this->enId === null) {
+            $this->enId = $this->getLanguageIdByCode($context, 'en-GB');
+        }
+        return $this->enId;
+    }
+
+    #endregion
+
+    #region state-machine functions
+
+    protected function getStateMachineId(
+        Context $context,
+        string $stateMachineName
+    ): ?string
+    {
+        $stateMachineRepo = $this->getContainer()->get(StateMachineDefinition::ENTITY_NAME.'.repository');
+        if ($stateMachineRepo) {
+            $stateMachineId = $stateMachineRepo->searchIds(
+                (new Criteria())->addFilter(
+                    new EqualsFilter('technicalName', $stateMachineName)
+                ),
+                $context
+            )->firstId();
+            if (!empty($stateMachineId)) {
+                return $stateMachineId;
+            }
+        }
+        return null;
+    }
+
+    protected function getStateId(
+        string $stateName,
+        string $stateMachineId,
+        Context $context): ?string
+    {
+        $stateRepo = $this->getContainer()->get(StateMachineStateDefinition::ENTITY_NAME.'.repository');
+        if ($stateRepo instanceof EntityRepositoryInterface) {
+            return $stateRepo->searchIds(
+                (new Criteria())->addFilter(
+                    new AndFilter(
+                        [
+                            new EqualsFilter('technicalName', $stateName),
+                            new EqualsFilter('stateMachineId', $stateMachineId)
+                        ]
+                    )
+                ),
+                $context
+            )->firstId();
+        }
+        return null;
+    }
+
+    protected function upsertState(
+        Context $context,
+        string $stateName,
+        string $stateMachineId,
+        array $translations = []
+    ): ?string
+    {
+        $stateRepo = $this->getContainer()->get(StateMachineStateDefinition::ENTITY_NAME.'.repository');
+        if ($stateRepo instanceof EntityRepositoryInterface) {
+            $stateId = $this->getStateId($stateName, $stateMachineId, $context);
+
+            if (empty($stateId)) {
+                $stateRepo->upsert([
+                    [
+                        'technicalName' => $stateName,
+                        'stateMachineId' => $stateMachineId,
+                        'translations' => $translations,
+                    ],
+                ], $context);
+                $stateId = $this->getStateId($stateName, $stateMachineId, $context);
+            }
+            return $stateId;
+        }
+        return null;
+    }
+
+    protected function getActionId(
+        string $actionName,
+        string $stateMachineId,
+        string $fromStateId,
+        string $toStateId,
+        Context $context): ?string
+    {
+        $transitionsRepo = $this->getContainer()->get(StateMachineTransitionDefinition::ENTITY_NAME.'.repository');
+        if( $transitionsRepo instanceof EntityRepositoryInterface) {
+            return $transitionsRepo->searchIds(
+                (new Criteria())->addFilter(
+                    new AndFilter(
+                        [
+                            new EqualsFilter('actionName', $actionName),
+                            new EqualsFilter('stateMachineId', $stateMachineId),
+                            new EqualsFilter('fromStateId', $fromStateId),
+                            new EqualsFilter('toStateId', $toStateId)
+                        ]
+                    )
+                ),
+                $context
+            )->firstId();
+        }
+        return null;
+    }
+
+    protected function upsertAction(
+        Context $context,
+        string $actionName,
+        string $stateMachineId,
+        string $openStateId,
+        string $articleReceivedId
+    ): ?string
+    {
+        $transitionsRepo = $this->container->get(StateMachineTransitionDefinition::ENTITY_NAME.'.repository');
+        if ($transitionsRepo instanceof EntityRepositoryInterface) {
+            $actionId = $this->getActionId(
+                $actionName,
+                $stateMachineId,
+                $openStateId,
+                $articleReceivedId,
+                $context);
+
+            if (empty($actionId)) {
+                $transitionsRepo->upsert([
+                    [
+                        'actionName' => $actionName,
+                        'stateMachineId' => $stateMachineId,
+                        'fromStateId' => $openStateId,
+                        'toStateId' => $articleReceivedId
+                    ],
+                ], $context);
+                $actionId = $this->getActionId(
+                    $actionName,
+                    $stateMachineId,
+                    $openStateId,
+                    $articleReceivedId,
+                    $context);
+            }
+            return $actionId;
+        }
+        return null;
+    }
+
+    #endregion
 }
