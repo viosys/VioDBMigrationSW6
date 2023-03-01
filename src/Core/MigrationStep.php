@@ -118,15 +118,20 @@ abstract class MigrationStep extends CoreMigrationStep
 
     #region plugin-lifecycle functions
 
+    /**
+     * @throws Exception
+     */
     protected function InstallPlugins(array $pluginList, bool $activate = true): void
     {
+        // run plugin:refresh to ensure that all plugins are installed
+        $this->pluginRefresh();
+
         $application = new Application($this->getKernel());
         $application->setAutoExit(false);
 
         $input =  new ArrayInput([
             0 => 'plugin:install',
             '--activate' => $activate,
-            '--refresh',
             'plugins' => $pluginList
         ]);
         $input->setInteractive(false);
@@ -153,12 +158,14 @@ abstract class MigrationStep extends CoreMigrationStep
      */
     protected function updatePlugins(array $pluginList): void
     {
+        // run plugin:refresh to ensure that all plugins are installed
+        $this->pluginRefresh();
+
         $application = new Application($this->getKernel());
         $application->setAutoExit(false);
 
         $input = new ArrayInput([
             0 => 'plugin:update',
-            '--refresh',
             'plugins' => $pluginList
         ]);
         $input->setInteractive(false);
