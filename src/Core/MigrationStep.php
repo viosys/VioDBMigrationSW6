@@ -33,6 +33,7 @@ abstract class MigrationStep extends CoreMigrationStep
     protected ?string $deId = null;
     protected ?string $enId = null;
 
+    protected ?KernelInterface $kernel = null;
     protected ?ContainerInterface $container = null;
 
     protected function getContainer(): ContainerInterface
@@ -45,9 +46,23 @@ abstract class MigrationStep extends CoreMigrationStep
 
     private function getKernel(): KernelInterface
     {
+        if( $this->kernel !== null ){
+            return $this->kernel;
+        }
         /** @var HttpKernel $kernel */
         global $kernel;
-        return $kernel->getKernel();
+        if( $kernel instanceof HttpKernel ){
+            $this->kernel = $kernel->getKernel();
+        }
+        // try to get kernel from global $app
+        global $app;
+        if ($app instanceof Application ) {
+            $this->kernel = $app->getKernel();
+        }
+        if ($this->kernel === null ) {
+            throw new Exception('Could not get kernel');
+        }
+        return $this->kernel;
     }
 
     protected function getContext(): Context
@@ -121,9 +136,6 @@ abstract class MigrationStep extends CoreMigrationStep
      */
     protected function InstallPlugins(array $pluginList, bool $activate = true): void
     {
-        // run plugin:refresh to ensure that all plugins are installed
-        $this->pluginRefresh();
-
         $application = new Application($this->getKernel());
         $application->setAutoExit(false);
 
@@ -139,26 +151,18 @@ abstract class MigrationStep extends CoreMigrationStep
     /**
      * @throws Exception
      */
+    #[Deprecated]
     protected function pluginRefresh(#[Deprecated] KernelInterface $kernel = null): void
     {
-        $application = new Application($this->getKernel());
-        $application->setAutoExit(false);
-
-        $input = new ArrayInput([
-            0 => 'plugin:refresh'
-        ]);
-        $input->setInteractive(false);
-        $application->run($input);
+        return;
     }
+
 
     /**
      * @throws Exception
      */
     protected function updatePlugins(array $pluginList): void
     {
-        // run plugin:refresh to ensure that all plugins are installed
-        $this->pluginRefresh();
-
         $application = new Application($this->getKernel());
         $application->setAutoExit(false);
 

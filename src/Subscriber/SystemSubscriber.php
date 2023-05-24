@@ -33,6 +33,16 @@ class SystemSubscriber implements EventSubscriberInterface
 
     public function onPostFinish(UpdatePostFinishEvent $event)
     {
+        // refresh the plugin list
+        $application = new Application($this->kernel);
+        $application->setAutoExit(false);
+
+        $input = new ArrayInput([
+            0 => 'plugin:refresh',
+            '--no-interaction' => null,
+        ]);
+        $application->run($input);
+
         $application = new Application($this->kernel);
         $application->setAutoExit(false);
 
