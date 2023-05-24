@@ -5,18 +5,17 @@ namespace Viosys\VioDBMigration\Core;
 
 use DateTime;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Driver\Exception as DBALDriverException;
 use Doctrine\DBAL\Exception as DBALException;
 use Exception;
 use JsonException;
 use Shopware\Core\Defaults;
 use Shopware\Core\Framework\Context;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\AndFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Shopware\Core\HttpKernel;
 use Shopware\Core\System\Language\LanguageDefinition;
-use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\StateMachine\Aggregation\StateMachineState\StateMachineStateDefinition;
 use Shopware\Core\System\StateMachine\Aggregation\StateMachineTransition\StateMachineTransitionDefinition;
 use Shopware\Core\System\StateMachine\StateMachineDefinition;
@@ -46,6 +45,7 @@ abstract class MigrationStep extends CoreMigrationStep
 
     private function getKernel(): KernelInterface
     {
+        /** @var HttpKernel $kernel */
         global $kernel;
         return $kernel->getKernel();
     }
@@ -60,7 +60,6 @@ abstract class MigrationStep extends CoreMigrationStep
 
     #region snippet functions
     /**
-     * @throws DBALDriverException
      * @throws DBALException
      */
     protected function getSnippetSetId(string $locale, Connection $connection): string
@@ -72,7 +71,6 @@ abstract class MigrationStep extends CoreMigrationStep
     }
 
     /**
-     * @throws DBALDriverException
      * @throws DBALException
      */
     protected function setSnippet(string $key, string $value, string $locale, Connection $connection): void
@@ -178,7 +176,7 @@ abstract class MigrationStep extends CoreMigrationStep
 
     protected function getLanguageIdByCode(Context $context, string $languageCode): string
     {
-        /** @var EntityRepositoryInterface $repository */
+        /** @var EntityRepository $repository */
         $repository = $this->getContainer()->get(LanguageDefinition::ENTITY_NAME . '.repository');
 
         $criteria = new Criteria();
@@ -213,7 +211,7 @@ abstract class MigrationStep extends CoreMigrationStep
     ): ?string
     {
         $stateMachineRepo = $this->getContainer()->get(StateMachineDefinition::ENTITY_NAME.'.repository');
-        if ($stateMachineRepo) {
+        if ($stateMachineRepo instanceof EntityRepository) {
             $stateMachineId = $stateMachineRepo->searchIds(
                 (new Criteria())->addFilter(
                     new EqualsFilter('technicalName', $stateMachineName)
@@ -233,7 +231,7 @@ abstract class MigrationStep extends CoreMigrationStep
         Context $context): ?string
     {
         $stateRepo = $this->getContainer()->get(StateMachineStateDefinition::ENTITY_NAME.'.repository');
-        if ($stateRepo instanceof EntityRepositoryInterface) {
+        if ($stateRepo instanceof EntityRepository) {
             return $stateRepo->searchIds(
                 (new Criteria())->addFilter(
                     new AndFilter(
@@ -257,7 +255,7 @@ abstract class MigrationStep extends CoreMigrationStep
     ): ?string
     {
         $stateRepo = $this->getContainer()->get(StateMachineStateDefinition::ENTITY_NAME.'.repository');
-        if ($stateRepo instanceof EntityRepositoryInterface) {
+        if ($stateRepo instanceof EntityRepository) {
             $stateId = $this->getStateId($stateName, $stateMachineId, $context);
 
             if (empty($stateId)) {
@@ -283,7 +281,7 @@ abstract class MigrationStep extends CoreMigrationStep
         Context $context): ?string
     {
         $transitionsRepo = $this->getContainer()->get(StateMachineTransitionDefinition::ENTITY_NAME.'.repository');
-        if( $transitionsRepo instanceof EntityRepositoryInterface) {
+        if( $transitionsRepo instanceof EntityRepository) {
             return $transitionsRepo->searchIds(
                 (new Criteria())->addFilter(
                     new AndFilter(
@@ -310,7 +308,7 @@ abstract class MigrationStep extends CoreMigrationStep
     ): ?string
     {
         $transitionsRepo = $this->container->get(StateMachineTransitionDefinition::ENTITY_NAME.'.repository');
-        if ($transitionsRepo instanceof EntityRepositoryInterface) {
+        if ($transitionsRepo instanceof EntityRepository) {
             $actionId = $this->getActionId(
                 $actionName,
                 $stateMachineId,
